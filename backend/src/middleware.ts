@@ -26,16 +26,30 @@ export default clerkMiddleware((auth, request) => {
   // Add CORS headers for all API routes
   if (path.startsWith('/api')) {
     const origin = request.headers.get('origin') || '';
-    const allowedOrigins = process.env.NODE_ENV === 'production'
-      ? [
-          'https://www.scripturespot.com', 
-          'https://scripturespot.com',
-          'https://scripture-spot-frontend.vercel.app',
-          'https://scripture-spot-backend.vercel.app'
-        ]
-      : ['http://localhost:3000', 'http://localhost:5002'];
     
-    const corsOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+    // Get allowed origins from environment or use defaults
+    const productionOrigins = [
+      'https://www.scripturespot.com', 
+      'https://scripturespot.com',
+      'https://scripture-spot-frontend.vercel.app',
+      'https://scripture-spot-backend.vercel.app'
+    ];
+    
+    const developmentOrigins = [
+      'http://localhost:3000',
+      process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:5002'
+    ];
+    
+    const allowedOrigins = process.env.NODE_ENV === 'production'
+      ? productionOrigins
+      : developmentOrigins;
+    
+    // In development, allow any localhost origin
+    const isAllowedOrigin = process.env.NODE_ENV === 'production'
+      ? allowedOrigins.includes(origin)
+      : allowedOrigins.includes(origin) || origin.startsWith('http://localhost:');
+    
+    const corsOrigin = isAllowedOrigin ? origin : allowedOrigins[0];
     
     // Handle OPTIONS preflight request
     if (request.method === 'OPTIONS') {
