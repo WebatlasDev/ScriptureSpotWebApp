@@ -27,7 +27,12 @@ export default clerkMiddleware((auth, request) => {
   if (path.startsWith('/api')) {
     const origin = request.headers.get('origin') || '';
     const allowedOrigins = process.env.NODE_ENV === 'production'
-      ? ['https://www.scripturespot.com', 'https://scripturespot.com']
+      ? [
+          'https://www.scripturespot.com', 
+          'https://scripturespot.com',
+          'https://scripture-spot-frontend.vercel.app',
+          'https://scripture-spot-backend.vercel.app'
+        ]
       : ['http://localhost:3000', 'http://localhost:5002'];
     
     const corsOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
