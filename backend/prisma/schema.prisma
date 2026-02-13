@@ -1,0 +1,534 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Authors {
+  Id                       String                     @id @default(uuid()) @db.Uuid
+  Name                     String                     @db.VarChar(255)
+  NicknameOrTitle          String?
+  BirthYear                Int?
+  DeathYear                Int?
+  Nationality              String?
+  Occupation               String?
+  ReligiousTradition       String?
+  SermonsPreached          Int?
+  Slug                     String?
+  Colors                   String?
+  Image                    String?
+  BooksWritten             Int?
+  Biography                String?
+  FullResImage             String?
+  IsBook                   Boolean                    @default(false)
+  ReadingLevel             String?
+  UpdatedDate              DateTime?
+  BibleVerseTakeawayQuotes BibleVerseTakeawayQuotes[]
+  Books                    Books[]
+  Commentaries             Commentaries[]
+  Facts                    Facts[]
+  Quotes                   Quotes[]
+  Works                    Works[]
+
+  @@map("authors")
+}
+
+model BibleBookOverviews {
+  Id                  String                @id @default(uuid()) @db.Uuid
+  BookId              String?               @db.Uuid
+  Author              String?
+  Composition         String?
+  Objective           String?
+  UniqueElements      String?
+  BookStructure       String?
+  KeyThemes           String?
+  TeachingHighlights  String?
+  HistoricalContext   String?
+  CulturalBackground  String?
+  PoliticalLandscape  String?
+  Audience            String?
+  BibleBooks          BibleBooks?           @relation(fields: [BookId], references: [Id], onDelete: Cascade)
+  BibleBookStructures BibleBookStructures[]
+
+  @@unique([BookId])
+  @@map("bible_book_overviews")
+}
+
+model BibleBooks {
+  Id                 String               @id @default(uuid()) @db.Uuid
+  Name               String?
+  Abbreviation       String?
+  BookNumber         Int?
+  Testament          String?
+  Chapters           Int?
+  Verses             Int?
+  Description        String?
+  Slug               String?
+  Aliases            String?
+  BibleBookOverviews BibleBookOverviews[]
+  BibleChapters      BibleChapters[]
+
+  @@map("bible_books")
+}
+
+model BibleBookStructures {
+  Id                 String              @id @default(uuid()) @db.Uuid
+  BookOverviewId     String?             @db.Uuid
+  Order              Int?
+  Title              String?
+  Description        String?
+  Verses             String?
+  VerseReferenceSlug String?
+  BibleBookOverviews BibleBookOverviews? @relation(fields: [BookOverviewId], references: [Id], onDelete: Cascade)
+
+  @@index([BookOverviewId])
+  @@map("bible_book_structures")
+}
+
+model BibleChapters {
+  Id            String        @id @default(uuid()) @db.Uuid
+  BookId        String?       @db.Uuid
+  ChapterNumber Int?
+  BibleBooks    BibleBooks?   @relation(fields: [BookId], references: [Id], onDelete: Cascade)
+  BibleVerses   BibleVerses[]
+
+  @@index([BookId])
+  @@map("bible_chapters")
+}
+
+model BibleVerseCrossReferences {
+  Id                   String                 @id @default(uuid()) @db.Uuid
+  Book                 String?
+  BookSlug             String?
+  Chapter              String?
+  Verse                String?
+  Keyword              String?
+  KeywordSlug          String?
+  BibleVerseReferences BibleVerseReferences[]
+
+  @@map("bible_verse_cross_references")
+}
+
+model BibleVerseReferences {
+  Id                                                         String                     @id @default(uuid()) @db.Uuid
+  StartVerseId                                               String?                    @db.Uuid
+  EndVerseId                                                 String?                    @db.Uuid
+  BibleVerseCrossReferenceId                                 String?                    @db.Uuid
+  BibleVerseCrossReferences                                  BibleVerseCrossReferences? @relation(fields: [BibleVerseCrossReferenceId], references: [Id], onDelete: NoAction)
+  BibleVerses_BibleVerseReferences_EndVerseIdToBibleVerses   BibleVerses?               @relation("BibleVerseReferences_EndVerseIdToBibleVerses", fields: [EndVerseId], references: [Id], onDelete: NoAction)
+  BibleVerses_BibleVerseReferences_StartVerseIdToBibleVerses BibleVerses?               @relation("BibleVerseReferences_StartVerseIdToBibleVerses", fields: [StartVerseId], references: [Id], onDelete: NoAction)
+  BibleVerseTakeaways                                        BibleVerseTakeaways[]
+  Commentaries                                               Commentaries[]
+  InterlinearWords                                           InterlinearWords[]
+
+  @@index([BibleVerseCrossReferenceId])
+  @@index([EndVerseId])
+  @@index([StartVerseId])
+  @@map("bible_verse_references")
+}
+
+model BibleVerses {
+  Id                                                                  String                 @id @default(uuid()) @db.Uuid
+  ChapterId                                                           String?                @db.Uuid
+  VerseNumber                                                         Int?
+  BibleVerseReferences_BibleVerseReferences_EndVerseIdToBibleVerses   BibleVerseReferences[] @relation("BibleVerseReferences_EndVerseIdToBibleVerses")
+  BibleVerseReferences_BibleVerseReferences_StartVerseIdToBibleVerses BibleVerseReferences[] @relation("BibleVerseReferences_StartVerseIdToBibleVerses")
+  BibleChapters                                                       BibleChapters?         @relation(fields: [ChapterId], references: [Id], onDelete: Cascade)
+  BibleVerseVersions                                                  BibleVerseVersions[]
+  Quotes                                                              Quotes[]
+
+  @@index([ChapterId])
+  @@map("bible_verses")
+}
+
+model BibleVerseTakeawayExcerpts {
+  Id                                                                                       String               @id @default(uuid()) @db.Uuid
+  TakeAwayId                                                                               String?              @db.Uuid
+  Order                                                                                    Int?
+  Title                                                                                    String?
+  Content                                                                                  String?
+  BibleVerseTakeawayId                                                                     String?              @db.Uuid
+  BibleVerseTakeaways_BibleVerseTakeawayExcerpts_BibleVerseTakeawayIdToBibleVerseTakeaways BibleVerseTakeaways? @relation("BibleVerseTakeawayExcerpts_BibleVerseTakeawayIdToBibleVerseTakeaways", fields: [BibleVerseTakeawayId], references: [Id], onDelete: NoAction)
+  BibleVerseTakeaways_BibleVerseTakeawayExcerpts_TakeAwayIdToBibleVerseTakeaways           BibleVerseTakeaways? @relation("BibleVerseTakeawayExcerpts_TakeAwayIdToBibleVerseTakeaways", fields: [TakeAwayId], references: [Id], onDelete: Cascade)
+
+  @@index([BibleVerseTakeawayId])
+  @@index([TakeAwayId])
+  @@map("bible_verse_takeaway_excerpts")
+}
+
+model BibleVerseTakeawayQuotes {
+  Id                                                                                     String               @id @default(uuid()) @db.Uuid
+  TakeAwayId                                                                             String?              @db.Uuid
+  AuthorId                                                                               String?              @db.Uuid
+  Order                                                                                  Int?
+  Title                                                                                  String?
+  Content                                                                                String?
+  Source                                                                                 String?
+  BibleVerseTakeawayId                                                                   String?              @db.Uuid
+  Authors                                                                                Authors?             @relation(fields: [AuthorId], references: [Id], onDelete: NoAction)
+  BibleVerseTakeaways_BibleVerseTakeawayQuotes_BibleVerseTakeawayIdToBibleVerseTakeaways BibleVerseTakeaways? @relation("BibleVerseTakeawayQuotes_BibleVerseTakeawayIdToBibleVerseTakeaways", fields: [BibleVerseTakeawayId], references: [Id], onDelete: NoAction)
+  BibleVerseTakeaways_BibleVerseTakeawayQuotes_TakeAwayIdToBibleVerseTakeaways           BibleVerseTakeaways? @relation("BibleVerseTakeawayQuotes_TakeAwayIdToBibleVerseTakeaways", fields: [TakeAwayId], references: [Id], onDelete: Cascade)
+
+  @@index([AuthorId])
+  @@index([BibleVerseTakeawayId])
+  @@index([TakeAwayId])
+  @@map("bible_verse_takeaway_quotes")
+}
+
+model BibleVerseTakeaways {
+  Id                                                                                              String                       @id @default(uuid()) @db.Uuid
+  BibleReferenceId                                                                                String?                      @db.Uuid
+  Slug                                                                                            String?
+  CommentaryAuthors                                                                               String?
+  BibleVerseTakeawayExcerpts_BibleVerseTakeawayExcerpts_BibleVerseTakeawayIdToBibleVerseTakeaways BibleVerseTakeawayExcerpts[] @relation("BibleVerseTakeawayExcerpts_BibleVerseTakeawayIdToBibleVerseTakeaways")
+  BibleVerseTakeawayExcerpts_BibleVerseTakeawayExcerpts_TakeAwayIdToBibleVerseTakeaways           BibleVerseTakeawayExcerpts[] @relation("BibleVerseTakeawayExcerpts_TakeAwayIdToBibleVerseTakeaways")
+  BibleVerseTakeawayQuotes_BibleVerseTakeawayQuotes_BibleVerseTakeawayIdToBibleVerseTakeaways     BibleVerseTakeawayQuotes[]   @relation("BibleVerseTakeawayQuotes_BibleVerseTakeawayIdToBibleVerseTakeaways")
+  BibleVerseTakeawayQuotes_BibleVerseTakeawayQuotes_TakeAwayIdToBibleVerseTakeaways               BibleVerseTakeawayQuotes[]   @relation("BibleVerseTakeawayQuotes_TakeAwayIdToBibleVerseTakeaways")
+  BibleVerseReferences                                                                            BibleVerseReferences?        @relation(fields: [BibleReferenceId], references: [Id], onDelete: Cascade)
+
+  @@map("bible_verse_takeaways")
+}
+
+model BibleVerseVersions {
+  Id             String         @id @default(uuid()) @db.Uuid
+  VerseId        String?        @db.Uuid
+  BibleVersionId String?        @db.Uuid
+  Content        String?
+  BibleVerses    BibleVerses?   @relation(fields: [VerseId], references: [Id], onDelete: Cascade)
+  BibleVersions  BibleVersions? @relation(fields: [BibleVersionId], references: [Id], onDelete: Cascade)
+
+  @@index([BibleVersionId])
+  @@index([VerseId])
+  @@map("bible_verse_versions")
+}
+
+model BibleVersions {
+  Id                 String               @id @default(uuid()) @db.Uuid
+  Name               String?
+  Abbreviation       String?
+  Language           String?
+  Copyright          String?
+  License            String?
+  Description        String?
+  Contributors       String?
+  PublishYear        String?
+  Publisher          String?
+  Source             String?
+  BibleVerseVersions BibleVerseVersions[]
+
+  @@map("bible_versions")
+}
+
+model Bookmarks {
+  Id          String   @id @default(uuid()) @db.Uuid
+  Type        Int?
+  ReferenceId String?  @db.Uuid
+  UserId      String?
+  CreatedDate DateTime @default(now())
+
+  @@map("bookmarks")
+}
+
+model Books {
+  Id       String   @id @default(uuid()) @db.Uuid
+  AuthorId String?  @db.Uuid
+  Content  String?
+  Slug     String?
+  Authors  Authors? @relation(fields: [AuthorId], references: [Id], onDelete: Cascade)
+
+  @@index([AuthorId])
+  @@map("books")
+}
+
+model CatechismItems {
+  Id                  String                @id @default(uuid()) @db.Uuid
+  CatechismId         String                @db.Uuid
+  Number              Int?
+  Question            String?
+  Answer              String?
+  Section             String?
+  Slug                String?
+  Catechisms          Catechisms            @relation(fields: [CatechismId], references: [Id], onDelete: Cascade)
+  CatechismProofTexts CatechismProofTexts[]
+
+  @@index([CatechismId])
+  @@map("catechism_items")
+}
+
+model CatechismProofTexts {
+  Id              String          @id @default(uuid()) @db.Uuid
+  CatechismItemId String?         @db.Uuid
+  ProofText       String?
+  CatechismItems  CatechismItems? @relation(fields: [CatechismItemId], references: [Id], onDelete: Cascade)
+
+  @@index([CatechismItemId])
+  @@map("catechism_proof_texts")
+}
+
+model Catechisms {
+  Id             String           @id @default(uuid()) @db.Uuid
+  Source         String?
+  Slug           String?
+  CatechismItems CatechismItems[]
+
+  @@map("catechisms")
+}
+
+model Commentaries {
+  Id                   String                @id @default(uuid()) @db.Uuid
+  AuthorId             String?               @db.Uuid
+  BibleReferenceId     String?               @db.Uuid
+  Slug                 String?
+  Source               String?
+  SourceUrl            String?
+  GroupId              String?
+  Authors              Authors?              @relation(fields: [AuthorId], references: [Id], onDelete: Cascade)
+  BibleVerseReferences BibleVerseReferences? @relation(fields: [BibleReferenceId], references: [Id], onDelete: Cascade)
+  CommentaryExcerpt    CommentaryExcerpt[]
+
+  @@index([AuthorId])
+  @@map("commentaries")
+}
+
+model CommentaryExcerpt {
+  Id           String        @id @default(uuid()) @db.Uuid
+  CommentaryId String?       @db.Uuid
+  Order        Int?
+  Content      String?
+  Type         Int           @default(0)
+  Commentaries Commentaries? @relation(fields: [CommentaryId], references: [Id], onDelete: Cascade)
+
+  @@index([CommentaryId])
+  @@map("commentary_excerpts")
+}
+
+model Contacts {
+  Id          String   @id @default(uuid()) @db.Uuid
+  UserId      String?
+  Name        String
+  Email       String
+  TargetEmail String
+  Subject     String   @default("")
+  Url         String   @default("")
+  CreatedDate DateTime @default(now())
+  Message     String   @default("")
+  Reason      String   @default("")
+
+  @@map("contacts")
+}
+
+model CtaTiles {
+  Id             String  @id @default(uuid()) @db.Uuid
+  Type           String?
+  Message        String?
+  DestinationUrl String?
+  PlacementRule  String?
+
+  @@map("cta_tiles")
+}
+
+model Facts {
+  Id       String   @id @default(uuid()) @db.Uuid
+  AuthorId String?  @db.Uuid
+  Content  String?
+  Authors  Authors? @relation(fields: [AuthorId], references: [Id], onDelete: Cascade)
+
+  @@index([AuthorId])
+  @@map("facts")
+}
+
+model InterlinearWords {
+  Id                   String                @id @default(uuid()) @db.Uuid
+  BibleReferenceId     String?               @db.Uuid
+  StrongsLexiconId     String?               @db.Uuid
+  EnglishWord          String?
+  Transliteration      String?
+  GrammarCompact       String?
+  GrammarDetailed      String?
+  Punctuation          String?
+  WordPosition         Int?
+  HebrewWord           String?
+  GreekWord            String?
+  BibleVerseReferences BibleVerseReferences? @relation(fields: [BibleReferenceId], references: [Id], onDelete: Cascade)
+  StrongsLexicons      StrongsLexicons?      @relation(fields: [StrongsLexiconId], references: [Id], onDelete: Cascade)
+
+  @@index([BibleReferenceId])
+  @@index([StrongsLexiconId])
+  @@map("interlinear_words")
+}
+
+model LandingPageComponents {
+  Id               String       @id @default(uuid()) @db.Uuid
+  LandingPageId    String       @db.Uuid
+  ComponentType    String?
+  EntityId         String       @db.Uuid
+  Order            Int?
+  AllowRandomOrder Boolean?
+  LandingPages     LandingPages @relation(fields: [LandingPageId], references: [Id], onDelete: Cascade)
+
+  @@index([LandingPageId])
+  @@map("landing_page_components")
+}
+
+model LandingPages {
+  Id                    String                  @id @default(uuid()) @db.Uuid
+  Slug                  String?
+  ReferenceSlug         String?
+  Header                String?
+  Subheader             String?
+  MetaKeywords          String?
+  MetaDescription       String?
+  LandingPageComponents LandingPageComponents[]
+
+  @@map("landing_pages")
+}
+
+model Quotes {
+  Id           String       @id @default(uuid()) @db.Uuid
+  BibleVerseId String?      @db.Uuid
+  AuthorId     String?      @db.Uuid
+  Content      String?
+  Slug         String?
+  Authors      Authors?     @relation(fields: [AuthorId], references: [Id], onDelete: NoAction)
+  BibleVerses  BibleVerses? @relation(fields: [BibleVerseId], references: [Id], onDelete: NoAction)
+
+  @@index([AuthorId])
+  @@index([BibleVerseId])
+  @@map("quotes")
+}
+
+model SearchEntries {
+  Id               String  @id @default(uuid()) @db.Uuid
+  Type             String?
+  Slug             String?
+  Reference        String?
+  AuthorName       String?
+  BookSlug         String? @db.VarChar(450)
+  ChapterNumber    Int?
+  VerseNumber      Int?
+  StartVerseNumber Int?
+  EndVerseNumber   Int?
+  Text             String?
+  TakeawayContent  String?
+  BookAliases      String?
+  BookName         String?
+
+  @@index([BookSlug, ChapterNumber, VerseNumber], name: "IX_SearchEntries_Book_Chapter_Verse")
+  @@map("search_entries")
+}
+
+model SEOKeywords {
+  Id                      String    @id @default(uuid()) @db.Uuid
+  Database                String?
+  Keyword                 String?
+  Tags                    String?
+  Seed_keyword            String?
+  Page                    String?
+  Topic                   String?
+  Page_type               String?
+  Volume                  Int?
+  Keyword_Difficulty      Int?
+  CPC_USD                 Decimal?  @db.Decimal(18, 6)
+  Competitive_Density     Int?
+  Number_of_Results       BigInt?
+  Intent                  String?
+  SERP_Features           String?
+  Trend                   String?
+  Click_potential         Int?
+  Content_reference_1     String?
+  Content_reference_2     String?
+  Content_reference_3     String?
+  Content_reference_4     String?
+  Content_reference_5     String?
+  Content_reference_6     String?
+  Content_reference_7     String?
+  Content_reference_8     String?
+  Content_reference_9     String?
+  Content_reference_10    String?
+  Competitor_on_TOP_10_1  String?
+  Competitor_on_TOP_10_2  String?
+  Competitor_on_TOP_10_3  String?
+  Competitor_on_TOP_10_4  String?
+  Competitor_on_TOP_10_5  String?
+  Competitor_on_TOP_10_6  String?
+  Competitor_on_TOP_10_7  String?
+  Competitor_on_TOP_10_8  String?
+  Competitor_on_TOP_10_9  String?
+  Competitor_on_TOP_10_10 String?
+  Keyword_Classification  String?
+  AddedDate               DateTime?
+  SubmittedForIndexing    Boolean   @default(false)
+
+  @@map("seo_keywords")
+}
+
+model SitemapEntries {
+  Id             String        @id @default(uuid()) @db.Uuid
+  SitemapGroupId String        @db.Uuid
+  Loc            String?
+  Title          String?
+  CreatedAt      DateTime      @default(now())
+  SitemapGroups  SitemapGroups @relation(fields: [SitemapGroupId], references: [Id], onDelete: Cascade)
+
+  @@index([SitemapGroupId])
+  @@map("sitemap_entries")
+}
+
+model SitemapGroups {
+  Id              String           @id @default(uuid()) @db.Uuid
+  GroupType       String
+  GroupIdentifier String
+  GeneratedAt     DateTime         @default(now())
+  SitemapEntries  SitemapEntries[]
+
+  @@map("sitemap_groups")
+}
+
+model StrongsLexicons {
+  Id               String             @id @default(uuid()) @db.Uuid
+  StrongsKey       String?            @db.VarChar(450)
+  ShortDefinition  String?
+  OriginalWord     String?
+  PartOfSpeech     String?
+  Transliteration  String?
+  Pronunciation    String?
+  PhoneticSpelling String?
+  KjvTranslation   String?
+  NasbTranslation  String?
+  WordOrigin       String?
+  StrongsDef       String?
+  BdbDef           String?
+  Frequency        Int?
+  Language         String?
+  InterlinearWords InterlinearWords[]
+
+  @@index([StrongsKey])
+  @@map("strongs_lexicons")
+}
+
+model Subscriptions {
+  Id               String    @id @default(uuid()) @db.Uuid
+  Email            String
+  CreatedDate      DateTime  @default(now())
+  Form             String    @default("")
+  Url              String    @default("")
+  ResubscribedDate DateTime?
+  UnsubscribedDate DateTime?
+
+  @@map("subscriptions")
+}
+
+model Works {
+  Id       String   @id @default(uuid()) @db.Uuid
+  AuthorId String?  @db.Uuid
+  Content  String?
+  Slug     String?
+  AaUrl    String?
+  Authors  Authors? @relation(fields: [AuthorId], references: [Id], onDelete: Cascade)
+
+  @@index([AuthorId])
+  @@map("works")
+}

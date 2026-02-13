@@ -1,0 +1,2 @@
+// Application Common - Behaviors
+export {};

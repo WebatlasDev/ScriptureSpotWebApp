@@ -1,0 +1,51 @@
+{
+  "name": "next-scripture-spot",
+  "version": "1.0.0",
+  "description": "ScriptureSpot API - Migrated from C# to Next.js with Clean Architecture",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 5002",
+    "build": "next build",
+    "start": "next start -p 5002",
+    "lint": "next lint",
+    "postinstall": "prisma generate",
+    "prisma:generate": "prisma generate",
+    "prisma:studio": "prisma studio"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@clerk/nextjs": "^5.3.0",
+    "@elastic/elasticsearch": "^8.11.0",
+    "@prisma/client": "^5.18.0",
+    "googleapis": "^140.0.0",
+    "ioredis": "^5.4.1",
+    "lodash": "^4.17.21",
+    "next": "^14.2.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "resend": "^4.0.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-react": "^5.31.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.17.7",
+    "@types/node": "^20.14.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-react": "^5.18.0",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^14.2.0",
+    "prettier": "^3.3.0",
+    "prisma": "^5.18.0",
+    "tsx": "^4.16.0",
+    "typescript": "^5.5.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

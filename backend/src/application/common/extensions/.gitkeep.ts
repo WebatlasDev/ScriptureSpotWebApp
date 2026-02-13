@@ -1,0 +1,2 @@
+// Application Common - Extensions
+export {};

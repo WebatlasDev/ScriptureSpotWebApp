@@ -1,0 +1,2 @@
+// Application Common - Enums
+export {};

@@ -1,0 +1,2 @@
+// Queries - Bible - Chapters
+export {};

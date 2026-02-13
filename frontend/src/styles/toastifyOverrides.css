@@ -1,0 +1,40 @@
+:root {
+  /* Success: match secondary color (#FFD700) */
+  --toastify-color-success: #FFD700;
+  --toastify-icon-color-success: #FFD700;
+  --toastify-color-progress-success: #FFD700;
+
+  /* Error: match your alert/error theme (#f44336) */
+  --toastify-color-error: #f44336;
+  --toastify-icon-color-error: #f44336;
+  --toastify-color-progress-error: #f44336;
+}
+
+/* Toast container box */
+.Toastify__toast {
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 15px;
+  padding: 12px 16px;
+}
+
+/* Success toast content */
+.Toastify__toast--success {
+  color: #FFD700; /* black on yellow */
+  background-color: #111111;
+}
+
+/* Error toast content */
+.Toastify__toast--error {
+  color: #f44336; /* white on red */
+  background-color: #fff;
+}
+
+/* Customize close button for both */
+.Toastify__close-button {
+  opacity: 0.8;
+}
+.Toastify__close-button:hover {
+  opacity: 1;
+}

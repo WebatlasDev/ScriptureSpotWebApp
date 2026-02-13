@@ -1,0 +1,2 @@
+// Queries - Bible - Interlinear
+export {};

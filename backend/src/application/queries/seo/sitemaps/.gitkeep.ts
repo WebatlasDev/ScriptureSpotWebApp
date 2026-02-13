@@ -1,0 +1,2 @@
+// Queries - SEO - Sitemaps
+export {};

@@ -1,0 +1,20 @@
+// Prisma Schema for ScriptureSpot
+// This will be populated based on C# Entity Framework Core migrations
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Models will be added during migration from C# entities
+// Example structure:
+// model Author {
+//   id        String   @id @default(uuid())
+//   name      String
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+// }

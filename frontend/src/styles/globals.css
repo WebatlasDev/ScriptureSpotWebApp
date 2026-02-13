@@ -1,0 +1,246 @@
+@import '../design-tokens/tokens.css';
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    /* Prevent double-tap zoom and improve touch responsiveness */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  html, body {
+    height: 100%;
+    background-color: var(--ss-color-semantic-background-canvas);
+    color: var(--ss-color-semantic-content-text-primary);
+    font-family: var(--font-inter), var(--font-lexend), sans-serif;
+  }
+  
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Prevent text selection on interactive elements */
+    -webkit-touch-callout: none;
+  }
+
+  /* Interactive elements should prevent text selection and improve touch response */
+  button, 
+  [role="button"], 
+  .MuiButtonBase-root,
+  .MuiChip-root,
+  [onClick] {
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .cl-drawerBody {
+    background-color: var(--ss-color-semantic-background-surface-panel) !important;
+  }
+  
+  /* Fallback for internal class */
+  .cl-internal-1t85gwk {
+    background-color: var(--ss-color-semantic-background-surface-panel) !important;
+  }
+  
+  /* Override accent color for user button popover */
+  button[role="menuitem"] {
+    color: var(--ss-color-semantic-content-text-primary) !important;
+    --accent: var(--ss-color-semantic-content-text-primary) !important;
+  }
+  
+  div[role="menu"] button {
+    color: var(--ss-color-semantic-content-text-primary) !important;
+    --accent: var(--ss-color-semantic-content-text-primary) !important;
+  }
+  
+  /* Add border to user button popover card */
+  .cl-userButtonPopoverCard {
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+  }
+  
+  .cl-userButtonPopoverRootBox {
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+  }
+  
+  /* Add black background to navbar */
+  .cl-navbar {
+    background-color: var(--ss-color-semantic-background-canvas) !important;
+  }
+  
+  /* Book Reader Highlight Styles - Enhanced specificity */
+  .reader-content .sentence.jump-in-highlight {
+    background-color: rgba(40, 142, 255, 0.3);
+    animation: readerPulse 2s ease-in-out;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+  }
+  
+  /* Underline style for sentences */
+  .reader-content .sentence.underline {
+    text-decoration: underline;
+    text-decoration-color: currentColor;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+    text-decoration-style: solid;
+  }
+  
+  /* Underline combined with highlights */
+  .reader-content .sentence.highlight-yellow.underline,
+  .reader-content .sentence.highlight-green.underline,
+  .reader-content .sentence.highlight-blue.underline,
+  .reader-content .sentence.highlight-red.underline,
+  .reader-content .sentence.highlight-purple.underline {
+    text-decoration: underline;
+    text-decoration-color: currentColor;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+  }
+  
+  .reader-content .sentence.highlight-yellow {
+    background-color: rgba(255, 235, 59, 0.35);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+  
+  .reader-content .sentence.highlight-green {
+    background-color: rgba(76, 175, 80, 0.35);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+  
+  .reader-content .sentence.highlight-blue {
+    background-color: rgba(33, 150, 243, 0.35);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+  
+  .reader-content .sentence.highlight-red {
+    background-color: rgba(244, 67, 54, 0.35);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+  
+  .reader-content .sentence.highlight-purple {
+    background-color: rgba(156, 39, 176, 0.35);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+  
+  /* Hover states for highlighted sentences */
+  .reader-content .sentence.highlight-yellow:hover,
+  .reader-content .sentence.highlight-green:hover,
+  .reader-content .sentence.highlight-blue:hover,
+  .reader-content .sentence.highlight-red:hover,
+  .reader-content .sentence.highlight-purple:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Proper highlight styles with sufficient specificity */
+  span.sentence.highlight-yellow,
+  .sentence.highlight-yellow {
+    background-color: rgba(255, 235, 59, 0.35) !important;
+    border-radius: 4px !important;
+    transition: all 0.2s ease !important;
+  }
+  
+  span.sentence.highlight-green,
+  .sentence.highlight-green {
+    background-color: rgba(76, 175, 80, 0.35) !important;
+    border-radius: 4px !important;
+    transition: all 0.2s ease !important;
+  }
+  
+  span.sentence.highlight-blue,
+  .sentence.highlight-blue {
+    background-color: rgba(33, 150, 243, 0.35) !important;
+    border-radius: 4px !important;
+    transition: all 0.2s ease !important;
+  }
+  
+  span.sentence.highlight-red,
+  .sentence.highlight-red {
+    background-color: rgba(244, 67, 54, 0.35) !important;
+    border-radius: 4px !important;
+    transition: all 0.2s ease !important;
+  }
+  
+  span.sentence.highlight-purple,
+  .sentence.highlight-purple {
+    background-color: rgba(156, 39, 176, 0.35) !important;
+    border-radius: 4px !important;
+    transition: all 0.2s ease !important;
+  }
+  
+  /* Hover effects for highlights */
+  span.sentence.highlight-yellow:hover,
+  .sentence.highlight-yellow:hover,
+  span.sentence.highlight-green:hover,
+  .sentence.highlight-green:hover,
+  span.sentence.highlight-blue:hover,
+  .sentence.highlight-blue:hover,
+  span.sentence.highlight-red:hover,
+  .sentence.highlight-red:hover,
+  span.sentence.highlight-purple:hover,
+  .sentence.highlight-purple:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  }
+  
+  /* Underline classes with high specificity */
+  span.sentence.underline,
+  .sentence.underline {
+    text-decoration: underline !important;
+    text-decoration-color: currentColor !important;
+    text-decoration-thickness: 2px !important;
+    text-underline-offset: 3px !important;
+    text-decoration-style: solid !important;
+  }
+  
+  /* Underline combined with highlights - with high specificity */
+  span.sentence.highlight-yellow.underline,
+  .sentence.highlight-yellow.underline,
+  span.sentence.highlight-green.underline,
+  .sentence.highlight-green.underline,
+  span.sentence.highlight-blue.underline,
+  .sentence.highlight-blue.underline,
+  span.sentence.highlight-red.underline,
+  .sentence.highlight-red.underline,
+  span.sentence.highlight-purple.underline,
+  .sentence.highlight-purple.underline {
+    text-decoration: underline !important;
+    text-decoration-color: currentColor !important;
+    text-decoration-thickness: 2px !important;
+    text-underline-offset: 3px !important;
+  }
+  
+  .search-highlight {
+    background-color: rgba(255, 193, 7, 0.6) !important;
+    color: var(--ss-color-base-neutrals-900) !important;
+    font-weight: 600 !important;
+    padding: 1px 2px;
+    border-radius: 2px;
+  }
+  
+  @keyframes readerPulse {
+    0% { 
+      background-color: rgba(40, 142, 255, 0.5); 
+    }
+    50% { 
+      background-color: rgba(40, 142, 255, 0.2); 
+    }
+    100% { 
+      background-color: rgba(40, 142, 255, 0.3); 
+    }
+  }
+  
+  /* Reader text selection styling */
+  .reader-content::selection {
+    background-color: rgba(255, 215, 0, 0.3);
+  }
+  
+  .reader-content::-moz-selection {
+    background-color: rgba(255, 215, 0, 0.3);
+  }
