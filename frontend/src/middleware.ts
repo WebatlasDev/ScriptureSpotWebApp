@@ -105,7 +105,15 @@ export default clerkMiddleware((auth, req) => {
 
 export const config = {
   matcher: [
-    '/((?!_next/|favicon.ico).*)',
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - assets/ (public static assets)
+     * - robots.txt, sitemap.xml (SEO files)
+     */
+    '/((?!_next/static|_next/image|favicon.ico|assets/|robots.txt|sitemap.xml|resvg.wasm).*)',
     '/(api|trpc)(.*)',
   ],
 };
