@@ -250,7 +250,7 @@ export default function ExitIntentNewsletterModal() {
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 3 }}>
                 <Box sx={{ width: 38, height: 38 }}>
                   <Image
-                    src="/assets/images/logos/Scripture-Spot-icon-only.svg"
+                    src="/assets/images/logos/scripture-spot-icon-only.svg"
                     alt="Scripture Spot"
                     width={38}
                     height={38}

@@ -82,7 +82,7 @@ const fetchBookChapterData = async (
       } : {
         name: 'John Calvin',
         slug: 'john-calvin',
-        image: '/assets/images/authors/john-calvin.webp'
+        image: '/assets/images/authors/full-res/John-Calvin.webp'
       },
       book: {
         name: 'Institutes of the Christian Religion',

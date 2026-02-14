@@ -92,7 +92,7 @@ export const metadata: Metadata = {
     images: ['/assets/images/logos/Scripture-Spot-Logo.png'],
   },
   icons: {
-    icon: `${env.site}/assets/images/logos/Scripture-Spot-Favicon.svg`,
+    icon: `${env.site}/assets/images/logos/scripture-spot-favicon.svg`,
   },
   other: {
     'google-adsense-account': 'ca-pub-5189192546187755',

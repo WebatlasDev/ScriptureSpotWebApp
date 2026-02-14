@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     images: [`${env.site}/api/og?title=Authentication`],
   },  
   icons: {
-    icon: '/assets/images/logos/Scripture-Spot-Favicon.svg',
+    icon: '/assets/images/logos/scripture-spot-favicon.svg',
   },
 };
 

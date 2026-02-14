@@ -101,7 +101,7 @@ export async function generateOgImage({
       }}
     >
       <img
-        src="https://www.scripturespot.com/assets/images/logos/Scripture-Spot-Logo.png"
+        src="https://scripture-spot-frontend.vercel.app/assets/images/logos/Scripture-Spot-Logo.png"
         alt="Scripture Spot Logo"
         style={{ position: 'absolute', top: '40px', left: '60px', color, width: '294', height: '54px' }}
       />

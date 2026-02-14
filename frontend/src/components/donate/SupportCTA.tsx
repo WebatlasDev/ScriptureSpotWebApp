@@ -82,7 +82,7 @@ export default function SupportCTA({
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundImage: 'url(/assets/images/marketing/premium-subscription-tier/premium-bg-lg.jpg)',
+              backgroundImage: 'url(/assets/images/marketing/premium-subscription-tier/Premium-bg-lg.jpg)',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               zIndex: 1,

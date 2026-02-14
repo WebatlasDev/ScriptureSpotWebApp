@@ -14,7 +14,7 @@ export default function LogoImage({ height = 40, className, style }: LogoImagePr
   const width = Math.round((height / LOGO_HEIGHT) * LOGO_WIDTH);
   return (
     <Image
-      src="/assets/images/logos/Scripture-Spot-Logo.svg"
+      src="/assets/images/logos/scripture-spot-logo.svg"
       alt="Scripture Spot Logo"
       width={width}
       height={height}
