@@ -109,6 +109,8 @@ model BibleVerseCrossReferences {
   KeywordSlug          String?
   BibleVerseReferences BibleVerseReferences[]
 
+  @@index([BookSlug, Chapter, Verse]) // Composite index for fast lookups
+  @@index([KeywordSlug]) // Index for keyword filtering
   @@map("bible_verse_cross_references")
 }
 

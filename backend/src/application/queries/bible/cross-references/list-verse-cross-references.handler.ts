@@ -18,37 +18,63 @@ export class ListVerseCrossReferencesQueryHandler
   implements IRequestHandler<ListVerseCrossReferencesQuery, BibleVerseCrossReferenceModel[]>
 {
   async handle(request: ListVerseCrossReferencesQuery): Promise<BibleVerseCrossReferenceModel[]> {
-    // Query cross-references
+    // Query cross-references with optimized select (avoid loading full nested objects)
     const crossReferences = await prisma.bibleVerseCrossReferences.findMany({
       where: {
         BookSlug: request.bookSlug || undefined,
         Chapter: request.chapterNumber || undefined,
         Verse: request.verseNumber || undefined,
       },
-      include: {
+      select: {
+        Id: true,
+        Book: true,
+        BookSlug: true,
+        Chapter: true,
+        Verse: true,
+        Keyword: true,
+        KeywordSlug: true,
         BibleVerseReferences: {
-          include: {
+          select: {
+            Id: true,
+            StartVerseId: true,
+            EndVerseId: true,
             BibleVerses_BibleVerseReferences_StartVerseIdToBibleVerses: {
-              include: {
+              select: {
+                VerseNumber: true,
                 BibleChapters: {
-                  include: {
-                    BibleBooks: true,
+                  select: {
+                    ChapterNumber: true,
+                    BibleBooks: {
+                      select: {
+                        Name: true,
+                        Slug: true,
+                        BookNumber: true,
+                      },
+                    },
                   },
                 },
               },
             },
             BibleVerses_BibleVerseReferences_EndVerseIdToBibleVerses: {
-              include: {
+              select: {
+                VerseNumber: true,
                 BibleChapters: {
-                  include: {
-                    BibleBooks: true,
+                  select: {
+                    ChapterNumber: true,
+                    BibleBooks: {
+                      select: {
+                        BookNumber: true,
+                      },
+                    },
                   },
                 },
               },
             },
           },
+          take: 100, // Limit references per cross-reference to prevent excessive data
         },
       },
+      take: 50, // Limit total cross-references to prevent timeout
     });
 
     // Order the results
@@ -142,41 +168,37 @@ export class ListVerseCrossReferencesQueryHandler
       return new Map();
     }
 
-    // Collect all book numbers in range
-    const bookNumbers = new Set<number>();
-
+    // Build specific verse IDs to fetch instead of fetching all verses from all books
+    const verseIds = new Set<string>();
+    
     for (const ref of uniqueRefs) {
-      const startBookNum = ref.BibleVerses_BibleVerseReferences_StartVerseIdToBibleVerses?.BibleChapters?.BibleBooks?.BookNumber;
-      if (!startBookNum) continue;
-
-      const endBookNum = ref.BibleVerses_BibleVerseReferences_EndVerseIdToBibleVerses?.BibleChapters?.BibleBooks?.BookNumber || startBookNum;
-      const min = Math.min(startBookNum, endBookNum);
-      const max = Math.max(startBookNum, endBookNum);
-
-      for (let i = min; i <= max; i++) {
-        bookNumbers.add(i);
+      const startVerseId = ref.StartVerseId;
+      const endVerseId = ref.EndVerseId;
+      
+      if (startVerseId) {
+        verseIds.add(startVerseId);
+      }
+      if (endVerseId && endVerseId !== startVerseId) {
+        verseIds.add(endVerseId);
       }
     }
 
-    if (bookNumbers.size === 0) {
+    if (verseIds.size === 0) {
       return new Map(uniqueRefs.map((r) => [r.Id, '']));
     }
 
-    // Query verses for all books in range
+    // Query only the specific verses needed (much more efficient)
     const verseData = await prisma.bibleVerseVersions.findMany({
       where: {
         BibleVersionId: versionId,
-        BibleVerses: {
-          BibleChapters: {
-            BibleBooks: {
-              BookNumber: { in: Array.from(bookNumbers) },
-            },
-          },
-        },
+        VerseId: { in: Array.from(verseIds) },
       },
       select: {
+        VerseId: true,
+        Content: true,
         BibleVerses: {
           select: {
+            Id: true,
             BibleChapters: {
               select: {
                 BibleBooks: {
@@ -190,136 +212,50 @@ export class ListVerseCrossReferencesQueryHandler
             VerseNumber: true,
           },
         },
-        Content: true,
       },
     });
 
-    // Group verses by book number
-    const versesByBook = new Map<number, VerseData[]>();
+    // Create a map of verse ID to verse data
+    const verseMap = new Map<string, VerseData>();
     for (const vd of verseData) {
-      const bookNum = vd.BibleVerses?.BibleChapters?.BibleBooks?.BookNumber || 0;
-      const chapterNum = vd.BibleVerses?.BibleChapters?.ChapterNumber || 0;
-      const verseNum = vd.BibleVerses?.VerseNumber || 0;
-
-      if (!versesByBook.has(bookNum)) {
-        versesByBook.set(bookNum, []);
+      if (vd.BibleVerses && vd.VerseId) {
+        verseMap.set(vd.VerseId, {
+          bookNumber: vd.BibleVerses.BibleChapters?.BibleBooks?.BookNumber || 0,
+          chapterNumber: vd.BibleVerses.BibleChapters?.ChapterNumber || 0,
+          verseNumber: vd.BibleVerses.VerseNumber || 0,
+          content: vd.Content,
+        });
       }
-
-      versesByBook.get(bookNum)!.push({
-        bookNumber: bookNum,
-        chapterNumber: chapterNum,
-        verseNumber: verseNum,
-        content: vd.Content,
-      });
     }
 
-    // Build lookup for each reference
+    // Build lookup for each reference (simplified - just use start and end verses)
     const lookup = new Map<string, string>();
 
     for (const ref of uniqueRefs) {
-      const startBook = ref.BibleVerses_BibleVerseReferences_StartVerseIdToBibleVerses?.BibleChapters?.BibleBooks?.BookNumber || 0;
-      if (startBook === 0) {
+      const startVerseId = ref.StartVerseId;
+      const endVerseId = ref.EndVerseId || startVerseId;
+      
+      const startVerse = verseMap.get(startVerseId);
+      const endVerse = endVerseId !== startVerseId ? verseMap.get(endVerseId) : startVerse;
+      
+      if (startVerse) {
+        let content = '';
+        
+        // If single verse or same verse
+        if (!endVerse || startVerseId === endVerseId) {
+          content = `<sup>${startVerse.verseNumber}</sup> ${startVerse.content || ''}`;
+        } else {
+          // Range - show both verses with ellipsis
+          content = `<sup>${startVerse.verseNumber}</sup> ${startVerse.content || ''}... <sup>${endVerse.verseNumber}</sup> ${endVerse.content || ''}`;
+        }
+        
+        lookup.set(ref.Id, content.trim());
+      } else {
         lookup.set(ref.Id, '');
-        continue;
       }
-
-      const startChapter = ref.BibleVerses_BibleVerseReferences_StartVerseIdToBibleVerses?.BibleChapters?.ChapterNumber || 0;
-      const startVerse = ref.BibleVerses_BibleVerseReferences_StartVerseIdToBibleVerses?.VerseNumber || 0;
-
-      const endBook = ref.BibleVerses_BibleVerseReferences_EndVerseIdToBibleVerses?.BibleChapters?.BibleBooks?.BookNumber || startBook;
-      const endChapter = ref.BibleVerses_BibleVerseReferences_EndVerseIdToBibleVerses?.BibleChapters?.ChapterNumber || startChapter;
-      const endVerse = ref.BibleVerses_BibleVerseReferences_EndVerseIdToBibleVerses?.VerseNumber || startVerse;
-
-      const versesInRange = this.getVersesInRange(
-        versesByBook,
-        startBook,
-        startChapter,
-        startVerse,
-        endBook,
-        endChapter,
-        endVerse
-      );
-
-      lookup.set(ref.Id, this.formatVerseContent(versesInRange));
     }
 
     return lookup;
-  }
-
-  private getVersesInRange(
-    versesByBook: Map<number, VerseData[]>,
-    startBook: number,
-    startChapter: number,
-    startVerse: number,
-    endBook: number,
-    endChapter: number,
-    endVerse: number
-  ): VerseData[] {
-    const minBook = Math.min(startBook, endBook);
-    const maxBook = Math.max(startBook, endBook);
-
-    const result: VerseData[] = [];
-
-    for (let bookNum = minBook; bookNum <= maxBook; bookNum++) {
-      const verses = versesByBook.get(bookNum);
-      if (!verses) continue;
-
-      for (const verse of verses) {
-        if (this.isWithinRange(verse, startBook, startChapter, startVerse, endBook, endChapter, endVerse)) {
-          result.push(verse);
-        }
-      }
-    }
-
-    // Sort results
-    result.sort((a, b) => {
-      if (a.bookNumber !== b.bookNumber) return a.bookNumber - b.bookNumber;
-      if (a.chapterNumber !== b.chapterNumber) return a.chapterNumber - b.chapterNumber;
-      return a.verseNumber - b.verseNumber;
-    });
-
-    return result;
-  }
-
-  private isWithinRange(
-    verse: VerseData,
-    startBook: number,
-    startChapter: number,
-    startVerse: number,
-    endBook: number,
-    endChapter: number,
-    endVerse: number
-  ): boolean {
-    const minBook = Math.min(startBook, endBook);
-    const maxBook = Math.max(startBook, endBook);
-
-    if (verse.bookNumber < minBook || verse.bookNumber > maxBook) {
-      return false;
-    }
-
-    if (verse.bookNumber === startBook) {
-      if (verse.chapterNumber < startChapter) return false;
-      if (verse.chapterNumber === startChapter && verse.verseNumber < startVerse) return false;
-    }
-
-    if (verse.bookNumber === endBook) {
-      if (verse.chapterNumber > endChapter) return false;
-      if (verse.chapterNumber === endChapter && verse.verseNumber > endVerse) return false;
-    }
-
-    return true;
-  }
-
-  private formatVerseContent(verses: VerseData[]): string {
-    const parts: string[] = [];
-
-    for (const verse of verses) {
-      if (verse.content) {
-        parts.push(`<sup>${verse.verseNumber}</sup> ${verse.content}`);
-      }
-    }
-
-    return parts.join(' ').trim();
   }
 
   private formatReferenceLabel(
