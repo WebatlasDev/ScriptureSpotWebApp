@@ -14,8 +14,12 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     
+    // Frontend sends StrongsNumber or StrongsKey (capital S)
     const query = new GetStrongsLexiconQuery(
-      searchParams.get('strongsNumber') ?? searchParams.get('strongsKey') ?? ''
+      searchParams.get('StrongsNumber') ?? 
+      searchParams.get('StrongsKey') ?? 
+      searchParams.get('strongsNumber') ?? 
+      searchParams.get('strongsKey') ?? ''
     );
     
     const handler = new GetStrongsLexiconQueryHandler();

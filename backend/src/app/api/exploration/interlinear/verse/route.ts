@@ -15,12 +15,13 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     
     const query = new ListInterlinearByVerseQuery();
-    query.bookSlug = searchParams.get('bookSlug') ?? undefined;
-    query.chapterNumber = searchParams.get('chapterNumber') 
-      ? parseInt(searchParams.get('chapterNumber')!, 10) 
+    // Parameters come with capital letters from frontend
+    query.bookSlug = searchParams.get('BookSlug') ?? undefined;
+    query.chapterNumber = searchParams.get('ChapterNumber') 
+      ? parseInt(searchParams.get('ChapterNumber')!, 10) 
       : undefined;
-    query.verseNumber = searchParams.get('verseNumber') 
-      ? parseInt(searchParams.get('verseNumber')!, 10) 
+    query.verseNumber = searchParams.get('VerseNumber') 
+      ? parseInt(searchParams.get('VerseNumber')!, 10) 
       : undefined;
     
     const handler = new ListInterlinearByVerseQueryHandler();

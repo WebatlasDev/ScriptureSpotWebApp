@@ -552,7 +552,7 @@ export default function VerseTakeawaysModal({
                     zIndex: 1,
                   }}
                 >
-                  {excerpt.title.replace(':', '')}
+                  {excerpt.title?.replace(':', '') || ''}
                 </Typography>
               </Box>
       <Typography

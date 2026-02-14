@@ -1,14 +1,11 @@
 import { IRequestHandler } from '@/lib/mediator';
 import { GetVerseRangeQuery } from './get-verse-range.query';
-import { BibleVerseRangeModel, BibleVerseVersionModel } from '@/application/models/bible-models';
-import { Mediator } from '@/lib/mediator';
-import { GetVerseVersionQuery } from '../get-verse-version';
+import { BibleVerseRangeModel } from '@/application/models/bible-models';
+import { prisma } from '@/lib/prisma';
 
 export class GetVerseRangeQueryHandler
   implements IRequestHandler<GetVerseRangeQuery, BibleVerseRangeModel>
 {
-  constructor(private mediator: Mediator) {}
-
   async handle(
     request: GetVerseRangeQuery,
     signal?: AbortSignal
@@ -28,32 +25,55 @@ export class GetVerseRangeQueryHandler
 
     const verseNumbers = this.parseVerseRange(request.verseRange);
 
-    const verses = (await Promise.all(
-      verseNumbers.map((number) =>
-        this.mediator.send(
-          new GetVerseVersionQuery({
-            bookSlug: request.bookSlug,
-            chapterNumber: request.chapterNumber,
-            verseNumber: number,
-            versionName: request.versionName,
-          }),
-          signal
-        )
-      )
-    )) as BibleVerseVersionModel[];
+    // Batch fetch all verses in one query instead of looping
+    const verses = await prisma.bibleVerseVersions.findMany({
+      where: {
+        BibleVerses: {
+          BibleChapters: {
+            BibleBooks: {
+              Slug: request.bookSlug,
+            },
+            ChapterNumber: request.chapterNumber,
+          },
+          VerseNumber: {
+            in: verseNumbers,
+          },
+        },
+        BibleVersions: {
+          Abbreviation: {
+            equals: request.versionName,
+            mode: 'insensitive',
+          },
+        },
+      },
+      select: {
+        Content: true,
+        BibleVerses: {
+          select: {
+            VerseNumber: true,
+          },
+        },
+      },
+      orderBy: {
+        BibleVerses: {
+          VerseNumber: 'asc',
+        },
+      },
+    });
 
+    // Build content with verse numbers
     const content: string[] = [];
-    for (let i = 0; i < verses.length; i++) {
-      const verse = verses[i];
-      if (verse && verse.content) {
-        content.push(`<sup>${verseNumbers[i]}</sup>${verse.content}`);
+    for (const verse of verses) {
+      const verseNum = verse.BibleVerses?.VerseNumber;
+      if (verse.Content && verseNum) {
+        content.push(`<sup>${verseNum}</sup>${verse.Content}`);
       }
     }
 
     return {
       content: content.join(' '),
       verseCount: verses.length,
-      verseNumbers: verseNumbers,
+      verseNumbers: verses.map(v => v.BibleVerses?.VerseNumber || 0).filter(n => n > 0),
     };
   }
 

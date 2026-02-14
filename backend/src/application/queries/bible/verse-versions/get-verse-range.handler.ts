@@ -1,17 +1,19 @@
 import { BibleVerseRangeModel } from '@/application/models/bible-models/bible-verse-range.model';
-import { BibleVerseVersionModel } from '@/application/models/bible-models/bible-verse-version.model';
 import { GetVerseRangeQuery, GetVerseRangeQueryResponse } from './get-verse-range.query';
-import { GetVerseVersionQueryHandler } from './get-verse-version.handler';
-import { GetVerseVersionQuery } from './get-verse-version.query';
+import { prisma } from '@/lib/prisma';
 
 /**
  * Handler for retrieving a range of verses with verse numbers  
  */
 export class GetVerseRangeQueryHandler {
-  private readonly getVerseVersionHandler = new GetVerseVersionQueryHandler();
-
   async handle(query: GetVerseRangeQuery): Promise<GetVerseRangeQueryResponse> {
     if (!query.bookSlug || !query.chapterNumber || !query.verseRange || !query.versionName) {
+      console.log('[GetVerseRange] Missing parameters:', { 
+        bookSlug: query.bookSlug, 
+        chapterNumber: query.chapterNumber, 
+        verseRange: query.verseRange, 
+        versionName: query.versionName 
+      });
       return {
         content: '',
         verseCount: 0,
@@ -20,25 +22,65 @@ export class GetVerseRangeQueryHandler {
     }
 
     const verseNumbers = this.parseVerseRange(query.verseRange);
+    console.log('[GetVerseRange] Fetching verses:', { 
+      bookSlug: query.bookSlug, 
+      chapter: query.chapterNumber, 
+      verseNumbers: verseNumbers.length,
+      version: query.versionName 
+    });
 
-    const verses: (BibleVerseVersionModel | null)[] = [];
-    for (const number of verseNumbers) {
-      const verse = await this.getVerseVersionHandler.handle({
-        bookSlug: query.bookSlug,
-        chapterNumber: query.chapterNumber,
-        verseNumber: number,
-        versionName: query.versionName
-      });
-      verses.push(verse);
-    }
+    // Batch fetch all verses in one query instead of looping
+    const verses = await prisma.bibleVerseVersions.findMany({
+      where: {
+        BibleVerses: {
+          BibleChapters: {
+            BibleBooks: {
+              Slug: query.bookSlug,
+            },
+            ChapterNumber: query.chapterNumber,
+          },
+          VerseNumber: {
+            in: verseNumbers,
+          },
+        },
+        BibleVersions: {
+          Abbreviation: {
+            equals: query.versionName,
+            mode: 'insensitive',
+          },
+        },
+      },
+      select: {
+        Content: true,
+        BibleVerses: {
+          select: {
+            VerseNumber: true,
+          },
+        },
+      },
+    });
 
-    const content: string[] = [];
-    for (let i = 0; i < verses.length; i++) {
-      const verse = verses[i];
-      if (verse && verse.content) {
-        content.push(`<sup>${verseNumbers[i]}</sup>${verse.content}`);
+    console.log('[GetVerseRange] Found verses:', verses.length);
+
+    // Create a map for quick lookup
+    const verseMap = new Map<number, string>();
+    for (const verse of verses) {
+      const verseNum = verse.BibleVerses?.VerseNumber;
+      if (verse.Content && verseNum) {
+        verseMap.set(verseNum, verse.Content);
       }
     }
+
+    // Build content in correct order based on verseNumbers array
+    const content: string[] = [];
+    for (const num of verseNumbers) {
+      const verseContent = verseMap.get(num);
+      if (verseContent) {
+        content.push(`<sup>${num}</sup>${verseContent}`);
+      }
+    }
+
+    console.log('[GetVerseRange] Generated content length:', content.join(' ').length);
 
     return {
       content: content.join(' '),

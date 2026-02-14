@@ -15,12 +15,13 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     
     const query = new GetVerseTakeawaysQuery();
-    query.bookSlug = searchParams.get('bookSlug') || undefined;
-    query.chapterNumber = searchParams.get('chapterNumber') 
-      ? parseInt(searchParams.get('chapterNumber')!, 10) 
+    // Frontend sends parameters with capital letters
+    query.bookSlug = searchParams.get('BookSlug') || undefined;
+    query.chapterNumber = searchParams.get('ChapterNumber') 
+      ? parseInt(searchParams.get('ChapterNumber')!, 10) 
       : undefined;
-    query.verseNumber = searchParams.get('verseNumber') 
-      ? parseInt(searchParams.get('verseNumber')!, 10) 
+    query.verseNumber = searchParams.get('VerseNumber') 
+      ? parseInt(searchParams.get('VerseNumber')!, 10) 
       : undefined;
     
     const handler = new GetVerseTakeawaysQueryHandler();

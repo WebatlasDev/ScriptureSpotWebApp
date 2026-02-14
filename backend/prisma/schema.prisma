@@ -205,6 +205,7 @@ model BibleVerseVersions {
 
   @@index([BibleVersionId])
   @@index([VerseId])
+  @@index([VerseId, BibleVersionId]) // Composite index for verse range queries
   @@map("bible_verse_versions")
 }
 
