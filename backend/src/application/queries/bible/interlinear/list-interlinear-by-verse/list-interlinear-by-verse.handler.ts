@@ -24,12 +24,30 @@ export class ListInterlinearByVerseQueryHandler
           },
         },
       },
-      include: {
-        StrongsLexicons: true,
+      select: {
+        Id: true,
+        BibleReferenceId: true,
+        WordPosition: true,
+        EnglishWord: true,
+        Transliteration: true,
+        GrammarDetailed: true,
+        StrongsLexicons: {
+          select: {
+            Id: true,
+            StrongsKey: true,
+            OriginalWord: true,
+            Transliteration: true,
+            Pronunciation: true,
+            StrongsDef: true,
+            ShortDefinition: true,
+            WordOrigin: true,
+          },
+        },
       },
       orderBy: {
         WordPosition: 'asc',
       },
+      take: 500, // Limit to prevent excessive data load
     });
 
     return interlinears.map((item) => ({

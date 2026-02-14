@@ -25,16 +25,34 @@ export class GetVerseTakeawaysQueryHandler
           },
         },
       },
-      include: {
+      select: {
+        Id: true,
+        BibleReferenceId: true,
+        Slug: true,
         BibleVerseTakeawayExcerpts_BibleVerseTakeawayExcerpts_TakeAwayIdToBibleVerseTakeaways: {
+          select: {
+            Id: true,
+            TakeAwayId: true,
+            Content: true,
+            Order: true,
+          },
           orderBy: {
             Order: 'asc',
           },
+          take: 50, // Limit excerpts
         },
         BibleVerseTakeawayQuotes_BibleVerseTakeawayQuotes_TakeAwayIdToBibleVerseTakeaways: {
+          select: {
+            Id: true,
+            TakeAwayId: true,
+            AuthorId: true,
+            Order: true,
+            Content: true,
+          },
           orderBy: {
             Order: 'asc',
           },
+          take: 50, // Limit quotes
         },
       },
     });

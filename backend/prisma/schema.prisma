@@ -191,6 +191,7 @@ model BibleVerseTakeaways {
   BibleVerseTakeawayQuotes_BibleVerseTakeawayQuotes_TakeAwayIdToBibleVerseTakeaways               BibleVerseTakeawayQuotes[]   @relation("BibleVerseTakeawayQuotes_TakeAwayIdToBibleVerseTakeaways")
   BibleVerseReferences                                                                            BibleVerseReferences?        @relation(fields: [BibleReferenceId], references: [Id], onDelete: Cascade)
 
+  @@index([BibleReferenceId]) // Index for faster lookups
   @@map("bible_verse_takeaways")
 }
 
