@@ -106,11 +106,15 @@ export class GetVerseTakeawaysQueryHandler
         };
 
         // Parse Colors JSON if present
-        if (quote.Authors.Colors) {
+        if (quote.Authors.Colors && quote.Authors.Colors.trim().length > 0) {
           try {
-            authorModel.colorScheme = JSON.parse(quote.Authors.Colors) as AuthorColorSchemeModel;
+            const parsed = JSON.parse(quote.Authors.Colors);
+            // Validate it's an object
+            if (parsed && typeof parsed === 'object') {
+              authorModel.colorScheme = parsed as AuthorColorSchemeModel;
+            }
           } catch (error) {
-            console.error(`Failed to parse color scheme for author ${quote.Authors.Name}:`, error);
+            console.error(`[GetVerseTakeaways] Failed to parse color scheme for author ${quote.Authors.Name}:`, error);
           }
         }
       }

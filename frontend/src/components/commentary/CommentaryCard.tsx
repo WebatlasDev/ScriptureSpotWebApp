@@ -331,6 +331,7 @@ export default function CommentaryCard({ commentary, commentaries, verseContent,
             dangerouslySetInnerHTML={{
               __html: previewHtml,
             }}
+            suppressHydrationWarning
           />
 
           <Box

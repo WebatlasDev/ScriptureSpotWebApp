@@ -52,7 +52,8 @@ export class ListInterlinearByChapterQueryHandler
     });
 
     // Group words by verse ID
-    const wordsByVerseId = new Map<string, typeof allWords>();
+    type InterlinearWord = typeof allWords[number];
+    const wordsByVerseId = new Map<string, InterlinearWord[]>();
     for (const word of allWords) {
       const verseId = word.BibleVerseReferences?.StartVerseId;
       if (!verseId) continue;
@@ -89,6 +90,13 @@ export class ListInterlinearByChapterQueryHandler
               strongsDef: w.StrongsLexicons.StrongsDef ?? undefined,
               shortDefinition: w.StrongsLexicons.ShortDefinition ?? undefined,
               wordOrigin: w.StrongsLexicons.WordOrigin ?? undefined,
+              partOfSpeech: w.StrongsLexicons.PartOfSpeech ?? undefined,
+              phoneticSpelling: w.StrongsLexicons.PhoneticSpelling ?? undefined,
+              kjvTranslation: w.StrongsLexicons.KjvTranslation ?? undefined,
+              nasbTranslation: w.StrongsLexicons.NasbTranslation ?? undefined,
+              bdbDef: w.StrongsLexicons.BdbDef ?? undefined,
+              frequency: w.StrongsLexicons.Frequency ?? undefined,
+              language: w.StrongsLexicons.Language ?? undefined,
             }
           : null,
       }));

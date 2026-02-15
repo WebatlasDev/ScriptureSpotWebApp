@@ -293,7 +293,8 @@ export default function StrongsModal({
 
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [bookmarkPromoOpen, setBookmarkPromoOpen] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [allLoadedReferences, setAllLoadedReferences] = useState<VerseReference[]>([]);
   const [adRefreshVersion, setAdRefreshVersion] = useState(0);
   const occurrencesScrollRef = useRef<HTMLDivElement | null>(null);
   const pendingScrollToIndexRef = useRef<number | null>(null);
@@ -318,9 +319,10 @@ export default function StrongsModal({
     [lexiconEntry],
   );
   const {
-    data: allVerseReferences,
+    data: verseReferencesData,
     isLoading: referencesLoading,
-  } = useExplorationLexiconVerseReferences(strongsKey, version);
+    isFetching: referencesFetching,
+  } = useExplorationLexiconVerseReferences(strongsKey, version, currentPage, 20);
 
   const strongsData = useMemo(() => {
     if (!lexiconEntry) return null;
@@ -354,23 +356,16 @@ export default function StrongsModal({
   const languageStyle = LANGUAGE_VARIANTS[languageKey];
   const interlinearTheme = interlinearThemes[languageKey];
 
-  const verseReferences = useMemo(
-    () => (allVerseReferences ? (allVerseReferences as VerseReference[]).slice(0, visibleCount) : []),
-    [allVerseReferences, visibleCount],
-  );
+  const verseReferences = allLoadedReferences;
 
-  const totalCount = allVerseReferences?.length ?? 0;
-  const hasMore = visibleCount < totalCount;
+  const totalCount = verseReferencesData?.totalCount ?? 0;
+  const totalPages = verseReferencesData?.totalPages ?? 0;
+  const hasMore = currentPage < totalPages;
   const loadMore = useCallback(() => {
-    setVisibleCount(prev => {
-      if (prev >= totalCount) {
-        pendingScrollToIndexRef.current = null;
-        return prev;
-      }
-      pendingScrollToIndexRef.current = prev;
-      return Math.min(prev + 10, totalCount);
-    });
-  }, [totalCount]);
+    if (currentPage < totalPages) {
+      setCurrentPage(prev => prev + 1);
+    }
+  }, [currentPage, totalPages]);
 
   const highlightTerms = useMemo(() => {
     if (!strongsData) return [] as string[];
@@ -541,11 +536,28 @@ export default function StrongsModal({
 
   useEffect(() => {
     if (open) {
-      setVisibleCount(10);
+      setCurrentPage(1);
+      setAllLoadedReferences([]);
       pendingScrollToIndexRef.current = null;
       occurrenceItemRefs.current.clear();
     }
   }, [open, strongsKey]);
+
+  // Accumulate loaded references across pages
+  useEffect(() => {
+    if (verseReferencesData?.results && verseReferencesData.page === currentPage) {
+      if (currentPage === 1) {
+        // First page: replace all
+        setAllLoadedReferences(verseReferencesData.results as VerseReference[]);
+      } else {
+        // Subsequent pages: append
+        setAllLoadedReferences(prev => [
+          ...prev,
+          ...(verseReferencesData.results as VerseReference[])
+        ]);
+      }
+    }
+  }, [verseReferencesData, currentPage]);
 
   useLayoutEffect(() => {
     if (!isMobile) {
@@ -568,7 +580,7 @@ export default function StrongsModal({
       scroller.scrollTo({ left: newScrollLeft, behavior: 'auto' });
       pendingScrollToIndexRef.current = null;
     });
-  }, [isMobile, visibleCount]);
+  }, [isMobile, currentPage]);
 
   const getHighlightedVerseText = useCallback(
     (book: string, chapter: number, verse: number, fallbackText: string) => {
@@ -1308,7 +1320,7 @@ export default function StrongsModal({
       );
     });
 
-    const occurrencesContent = referencesLoading ? (
+    const occurrencesContent = (referencesLoading && currentPage === 1) ? (
       <Box sx={{ py: 4, display: 'flex', justifyContent: 'center' }}>
         <LoadingSpinner message="Loading occurrences..." />
       </Box>
@@ -1346,8 +1358,9 @@ export default function StrongsModal({
           <Box
             component={Primitive.button}
             type="button"
-            aria-label="Load 10 more occurrences"
+            aria-label="Load more occurrences"
             onClick={loadMore}
+            disabled={referencesFetching}
             sx={{
               position: 'relative',
               display: 'flex',
@@ -1365,7 +1378,8 @@ export default function StrongsModal({
               color: languageStyle.accentColor,
               fontWeight: 600,
               textAlign: 'center',
-              cursor: 'pointer',
+              opacity: referencesFetching ? 0.5 : 1,
+              cursor: referencesFetching ? 'wait' : 'pointer',
               transition: 'transform 0.24s ease, background-color 0.24s ease, border-color 0.24s ease',
               outline: 'none',
               '@media (hover: hover)': {
@@ -1382,10 +1396,10 @@ export default function StrongsModal({
             }}
           >
             <Typography sx={{ fontSize: 15, textTransform: 'uppercase', letterSpacing: '0.6px' }}>
-              View More
+              {referencesFetching ? 'Loading...' : 'View More'}
             </Typography>
             <Typography sx={{ fontSize: 13, color: TEXT_COLOR_SECONDARY, letterSpacing: '0.4px' }}>
-              ({remainingOccurrences} remaining)
+              {referencesFetching ? 'Please wait' : `(${remainingOccurrences} remaining)`}
             </Typography>
           </Box>
         )}
@@ -1459,6 +1473,7 @@ export default function StrongsModal({
             component={Primitive.button}
             type="button"
             onClick={loadMore}
+            disabled={referencesFetching}
             sx={{
               alignSelf: 'stretch',
               display: 'inline-flex',
@@ -1472,9 +1487,10 @@ export default function StrongsModal({
               backgroundColor: 'transparent',
               color: languageStyle.accentColor,
               fontSize: 16,
+              opacity: referencesFetching ? 0.5 : 1,
+              cursor: referencesFetching ? 'wait' : 'pointer',
               fontWeight: 500,
               textTransform: 'none',
-              cursor: 'pointer',
               transition: 'background-color 0.2s ease, color 0.2s ease, transform 0.2s ease',
               outline: 'none',
               '&:hover': {
@@ -1490,7 +1506,7 @@ export default function StrongsModal({
               },
             }}
           >
-                View More
+            {referencesFetching ? 'Loading...' : 'View More'}
           </Box>
         )}
       </Box>

@@ -29,6 +29,13 @@ export class GetStrongsLexiconQueryHandler
       strongsDef: lexicon.StrongsDef ?? undefined,
       shortDefinition: lexicon.ShortDefinition ?? undefined,
       wordOrigin: lexicon.WordOrigin ?? undefined,
+      partOfSpeech: lexicon.PartOfSpeech ?? undefined,
+      phoneticSpelling: lexicon.PhoneticSpelling ?? undefined,
+      kjvTranslation: lexicon.KjvTranslation ?? undefined,
+      nasbTranslation: lexicon.NasbTranslation ?? undefined,
+      bdbDef: lexicon.BdbDef ?? undefined,
+      frequency: lexicon.Frequency ?? undefined,
+      language: lexicon.Language ?? undefined,
     } as StrongsLexiconModel;
   }
 }

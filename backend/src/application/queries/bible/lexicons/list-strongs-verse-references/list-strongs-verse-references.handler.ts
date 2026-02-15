@@ -1,5 +1,8 @@
 import { IRequestHandler } from '@/lib/mediator';
-import { ListStrongsVerseReferencesQuery } from './list-strongs-verse-references.query';
+import { 
+  ListStrongsVerseReferencesQuery,
+  PaginatedStrongsVerseReferencesModel 
+} from './list-strongs-verse-references.query';
 import { StrongsVerseReferenceModel } from '@/application/models/bible-models';
 import { prisma } from '@/lib/prisma';
 
@@ -7,18 +10,40 @@ export class ListStrongsVerseReferencesQueryHandler
   implements
     IRequestHandler<
       ListStrongsVerseReferencesQuery,
-      StrongsVerseReferenceModel[]
+      PaginatedStrongsVerseReferencesModel
     >
 {
   async handle(
     request: ListStrongsVerseReferencesQuery,
     signal?: AbortSignal
-  ): Promise<StrongsVerseReferenceModel[]> {
-    const version = await prisma.bibleVersions.findFirst({
+  ): Promise<PaginatedStrongsVerseReferencesModel> {
+    const version = request.version 
+      ? await prisma.bibleVersions.findFirst({
+          where: {
+            Abbreviation: request.version,
+          },
+          select: {
+            Id: true,
+          },
+        })
+      : null;
+
+    // Get total count of distinct references using groupBy
+    const distinctReferences = await prisma.interlinearWords.groupBy({
+      by: ['BibleReferenceId'],
       where: {
-        Abbreviation: request.version,
+        StrongsLexicons: {
+          StrongsKey: request.strongsKey,
+        },
       },
     });
+    const totalCount = distinctReferences.length;
+
+    // Calculate pagination
+    const page = request.page ?? 1;
+    const pageSize = request.pageSize ?? 20;
+    const skip = (page - 1) * pageSize;
+    const totalPages = Math.ceil(totalCount / pageSize);
 
     const references = await prisma.interlinearWords.findMany({
       where: {
@@ -26,14 +51,24 @@ export class ListStrongsVerseReferencesQueryHandler
           StrongsKey: request.strongsKey,
         },
       },
-      include: {
+      select: {
+        BibleReferenceId: true,
         BibleVerseReferences: {
-          include: {
+          select: {
             BibleVerses_BibleVerseReferences_StartVerseIdToBibleVerses: {
-              include: {
+              select: {
+                Id: true,
+                VerseNumber: true,
                 BibleChapters: {
-                  include: {
-                    BibleBooks: true,
+                  select: {
+                    ChapterNumber: true,
+                    BibleBooks: {
+                      select: {
+                        Name: true,
+                        Slug: true,
+                        BookNumber: true,
+                      },
+                    },
                   },
                 },
               },
@@ -55,7 +90,33 @@ export class ListStrongsVerseReferencesQueryHandler
           },
         },
       ],
+      skip: skip,
+      take: pageSize,
     });
+
+    // Collect all verse IDs for batch query
+    const verseIds = references
+      .map(ref => ref.BibleVerseReferences?.BibleVerses_BibleVerseReferences_StartVerseIdToBibleVerses?.Id)
+      .filter((id): id is string => !!id);
+
+    // Batch load verse texts if version specified
+    const verseTexts = version && verseIds.length > 0
+      ? await prisma.bibleVerseVersions.findMany({
+          where: {
+            BibleVersionId: version.Id,
+            VerseId: { in: verseIds },
+          },
+          select: {
+            VerseId: true,
+            Content: true,
+          },
+        })
+      : [];
+
+    // Create lookup map
+    const verseTextMap = new Map(
+      verseTexts.map(vt => [vt.VerseId, vt.Content])
+    );
 
     const results: StrongsVerseReferenceModel[] = [];
 
@@ -68,25 +129,24 @@ export class ListStrongsVerseReferencesQueryHandler
       const book = verse.BibleChapters.BibleBooks;
       if (!book) continue;
 
-      const verseText = version
-        ? await prisma.bibleVerseVersions.findFirst({
-            where: {
-              BibleVersionId: version.Id,
-              VerseId: verse.Id,
-            },
-            select: { Content: true },
-          })
-        : null;
+      const verseText = verseTextMap.get(verse.Id) ?? null;
 
       results.push({
         book: book.Name ?? undefined,
+        bookSlug: book.Slug ?? undefined,
         chapter: verse.BibleChapters.ChapterNumber ?? undefined,
         verse: verse.VerseNumber ?? undefined,
         reference: `${book.Name} ${verse.BibleChapters.ChapterNumber}:${verse.VerseNumber}`,
-        text: verseText?.Content ?? null,
+        text: verseText,
       });
     }
 
-    return results;
+    return {
+      results,
+      totalCount,
+      page,
+      pageSize,
+      totalPages,
+    };
   }
 }
