@@ -1,6 +1,6 @@
 import { IRequestHandler } from '@/lib/mediator';
 import { GetVerseTakeawaysQuery } from './get-verse-takeaways.query';
-import { BibleVerseTakeawayModel, BibleVerseTakeawayExcerptModel, BibleVerseTakeawayQuoteModel } from '@/application/models';
+import { BibleVerseTakeawayModel, BibleVerseTakeawayExcerptModel, BibleVerseTakeawayQuoteModel, AuthorModel, AuthorColorSchemeModel } from '@/application/models';
 import { prisma } from '@/lib/prisma';
 
 /**
@@ -57,6 +57,17 @@ export class GetVerseTakeawaysQueryHandler
             Title: true,
             Order: true,
             Content: true,
+            Source: true,
+            Authors: {
+              select: {
+                Id: true,
+                Name: true,
+                Slug: true,
+                Image: true,
+                Colors: true,
+                NicknameOrTitle: true,
+              },
+            },
           },
           orderBy: {
             Order: 'asc',
@@ -80,16 +91,41 @@ export class GetVerseTakeawaysQueryHandler
       order: excerpt.Order ?? undefined,
     }));
 
-    const quoteModels: BibleVerseTakeawayQuoteModel[] = takeaway.BibleVerseTakeawayQuotes_BibleVerseTakeawayQuotes_BibleVerseTakeawayIdToBibleVerseTakeaways.map((quote): BibleVerseTakeawayQuoteModel => ({
-      id: quote.Id ?? undefined,
-      takeAwayId: quote.BibleVerseTakeawayId ?? undefined,
-      authorId: quote.AuthorId ?? undefined,
-      order: quote.Order ?? undefined,
-      title: quote.Title ?? undefined,
-      content: quote.Content ?? undefined,
-      source: undefined,
-      author: undefined,
-    }));
+    const quoteModels: BibleVerseTakeawayQuoteModel[] = takeaway.BibleVerseTakeawayQuotes_BibleVerseTakeawayQuotes_BibleVerseTakeawayIdToBibleVerseTakeaways.map((quote): BibleVerseTakeawayQuoteModel => {
+      let authorModel: AuthorModel | undefined = undefined;
+      
+      if (quote.Authors) {
+        authorModel = {
+          id: quote.Authors.Id,
+          name: quote.Authors.Name ?? undefined,
+          slug: quote.Authors.Slug ?? undefined,
+          image: quote.Authors.Image ?? undefined,
+          nicknameOrTitle: quote.Authors.NicknameOrTitle ?? undefined,
+          isBook: false,
+          colorScheme: undefined,
+        };
+
+        // Parse Colors JSON if present
+        if (quote.Authors.Colors) {
+          try {
+            authorModel.colorScheme = JSON.parse(quote.Authors.Colors) as AuthorColorSchemeModel;
+          } catch (error) {
+            console.error(`Failed to parse color scheme for author ${quote.Authors.Name}:`, error);
+          }
+        }
+      }
+
+      return {
+        id: quote.Id ?? undefined,
+        takeAwayId: quote.BibleVerseTakeawayId ?? undefined,
+        authorId: quote.AuthorId ?? undefined,
+        order: quote.Order ?? undefined,
+        title: quote.Title ?? undefined,
+        content: quote.Content ?? undefined,
+        source: quote.Source ?? undefined,
+        author: authorModel,
+      };
+    });
 
     const result = {
       id: takeaway.Id ?? undefined,
