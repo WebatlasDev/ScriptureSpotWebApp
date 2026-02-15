@@ -26,20 +26,47 @@ export class ListInterlinearByChapterQueryHandler
       orderBy: { VerseNumber: 'asc' },
     });
 
+    if (verses.length === 0) {
+      return [];
+    }
+
+    // Get all verse IDs
+    const verseIds = verses.map(v => v.Id);
+
+    // Fetch all interlinear words for all verses in a single query
+    const allWords = await prisma.interlinearWords.findMany({
+      where: {
+        BibleVerseReferences: {
+          StartVerseId: { in: verseIds },
+        },
+      },
+      include: {
+        StrongsLexicons: true,
+        BibleVerseReferences: {
+          select: {
+            StartVerseId: true,
+          },
+        },
+      },
+      orderBy: { WordPosition: 'asc' },
+    });
+
+    // Group words by verse ID
+    const wordsByVerseId = new Map<string, typeof allWords>();
+    for (const word of allWords) {
+      const verseId = word.BibleVerseReferences?.StartVerseId;
+      if (!verseId) continue;
+      
+      if (!wordsByVerseId.has(verseId)) {
+        wordsByVerseId.set(verseId, []);
+      }
+      wordsByVerseId.get(verseId)!.push(word);
+    }
+
     const results: VerseInterlinearModel[] = [];
 
     for (const verse of verses) {
-      const words = await prisma.interlinearWords.findMany({
-        where: {
-          BibleVerseReferences: {
-            StartVerseId: verse.Id,
-          },
-        },
-        include: {
-          StrongsLexicons: true,
-        },
-        orderBy: { WordPosition: 'asc' },
-      });
+      const words = wordsByVerseId.get(verse.Id) || [];
 
       if (words.length === 0) continue;
 
