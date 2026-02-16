@@ -24,8 +24,18 @@ export class ListAuthorsQueryHandler {
         slug: author.Slug ?? undefined,
         biography: author.Biography ?? undefined,
         image: author.Image ?? undefined,
+        fullResImage: author.FullResImage ?? undefined,
         updatedDate: author.UpdatedDate ?? undefined,
         isBook: author.IsBook,
+        birthYear: author.BirthYear ?? undefined,
+        deathYear: author.DeathYear ?? undefined,
+        nationality: author.Nationality ?? undefined,
+        occupation: author.Occupation ?? undefined,
+        religiousTradition: author.ReligiousTradition ?? undefined,
+        nicknameOrTitle: author.NicknameOrTitle ?? undefined,
+        sermonsPreached: author.SermonsPreached ?? undefined,
+        booksWritten: author.BooksWritten ?? undefined,
+        readingLevel: author.ReadingLevel ?? undefined,
         colorScheme: undefined,
       };
 
