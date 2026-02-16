@@ -8,46 +8,16 @@ interface VerseInterlinearData {
 }
 
 export function useExplorationInterlinearChapter(bookSlug: string, chapterNumber: number) {
-  return useApiQuery(
+  return useApiQuery<VerseInterlinearData[]>(
     ['explorationInterlinearChapter', bookSlug, chapterNumber],
     async () => {
-      // First, get all verses for this chapter
-      const verses = await agent.Bible.listBibleVerses({ 
-        BookSlug: bookSlug, 
-        ChapterNumber: chapterNumber 
+      // Use optimized chapter endpoint that fetches all verses at once
+      const chapterData = await agent.Exploration.getInterlinearChapter({
+        BookSlug: bookSlug,
+        ChapterNumber: chapterNumber
       });
       
-      if (!verses || !Array.isArray(verses)) {
-        return [];
-      }
-
-      // Fetch interlinear data for each verse
-      const chapterData: VerseInterlinearData[] = [];
-      
-      for (const verse of verses) {
-        try {
-          const interlinearData = await agent.Exploration.getInterlinearVerse({
-            BookSlug: bookSlug,
-            ChapterNumber: chapterNumber,
-            VerseNumber: verse.verseNumber
-          });
-          
-          if (interlinearData && Array.isArray(interlinearData) && interlinearData.length > 0) {
-            // Determine language from first word
-            const language = interlinearData[0]?.hebrewWord ? 'HEBREW' : 'GREEK';
-            
-            chapterData.push({
-              verseNumber: verse.verseNumber,
-              words: interlinearData,
-              language
-            });
-          }
-        } catch {
-          // Continue with other verses even if one fails
-        }
-      }
-
-      return chapterData;
+      return chapterData || [];
     },
     { 
       enabled: !!bookSlug && !!chapterNumber, 

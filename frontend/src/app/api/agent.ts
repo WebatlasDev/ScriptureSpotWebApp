@@ -140,6 +140,8 @@ const Bible = {
 const Exploration = {
     getInterlinearVerse: (data: any) =>
         requests.get('exploration/interlinear/verse', data),
+    getInterlinearChapter: (data: any) =>
+        requests.get('exploration/interlinear/chapter', data),
     getLexiconEntry: (data: any) =>
         requests.get('exploration/lexicon/entry', data),
     getLexiconVerseReference: (data: any) => 
